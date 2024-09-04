@@ -1,7 +1,6 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-
-
-
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton
+from database.requests import *
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 t_consult = ReplyKeyboardMarkup(
     keyboard=[
@@ -24,3 +23,12 @@ m_consult = ReplyKeyboardMarkup(
     resize_keyboard=True,
     input_field_placeholder='↓Выберите пункт из меню ниже↓'
 )
+
+
+async def all_windows():
+    windows = await get_windows()
+    keyboard = InlineKeyboardBuilder()
+    for window in windows:
+        keyboard.add(InlineKeyboardButton(text=f'{window.day}, {window.date}, {window.time}',
+                                          callback_data=f'{window.day}{window.date}{window.time}'))
+    return keyboard.adjust(2).as_markup()
