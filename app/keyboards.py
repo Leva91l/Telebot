@@ -1,4 +1,4 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 from database.requests import *
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -25,10 +25,27 @@ m_consult = ReplyKeyboardMarkup(
 )
 
 
+registration = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text='Погнали')]
+    ],
+    resize_keyboard=True,
+)
+
+
 async def all_windows():
     windows = await get_windows()
     keyboard = InlineKeyboardBuilder()
     for window in windows:
-        keyboard.add(InlineKeyboardButton(text=f'{window.day}, {window.date}, {window.time}',
-                                          callback_data=f'{window.day}{window.date}{window.time}'))
+            keyboard.add(InlineKeyboardButton(text=f'{window.day}, {window.date}, {window.time}',
+                                              callback_data=f'{window.day}{window.date}{window.time}'))
     return keyboard.adjust(2).as_markup()
+
+
+payment_keyboard = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text='Приступить к оплате')]
+    ],
+    resize_keyboard=True,
+    input_field_placeholder='↓Нажмите, чтобы приступить к оплате↓'
+)

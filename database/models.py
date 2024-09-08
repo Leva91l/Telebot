@@ -15,16 +15,17 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     tg_id = mapped_column(BigInteger)
     name = mapped_column(String)  # difference
-
+    number = mapped_column(String)
+    birthday = mapped_column(String)
 
 
 class Windows(Base):
-    __tablename__ = 'Windows'
+    __tablename__ = 'windows'
     id: Mapped[int] = mapped_column(primary_key=True)
     day = mapped_column(String)
     date = mapped_column(String)
     time = mapped_column(String)
-    window_free = mapped_column(Boolean)
+    status = mapped_column(String)
 
 async def async_main():
     async with engine.begin() as conn:

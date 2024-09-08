@@ -1,16 +1,27 @@
+from aiogram import Router, F, Bot, types, filters
+from aiogram.enums import ContentType
 from aiogram.filters import CommandStart
-from aiogram.types import Message, CallbackQuery
-from aiogram import Router, F, Bot
-import database.requests as rq
-import app.keyboards as kb
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import Message, CallbackQuery, LabeledPrice, PreCheckoutQuery
 
+import app.keyboards as kb
+from app.keyboards import registration, payment_keyboard
+from config import YOOTOKEN
+from database.requests import *
 
 router = Router()
 
 
+class Reg(StatesGroup):
+    name = State()
+    number = State()
+    birthday = State()
+
+
 @router.message(CommandStart())
 async def cmd_start(message: Message):
-    await rq.set_user(message.from_user.id, message.from_user.first_name)
+    # await set_user(message.from_user.id)
 
     await message.answer(
         'Привет пациент Муськи! Гони свои денежки и проваливай!\nПожалуйста, выберите тип консультации!',
@@ -40,12 +51,67 @@ async def date_choice(message: Message):
 @router.callback_query(F.data)
 async def monday_callback(callback: CallbackQuery):
     day = callback.data[0:2]
-    await rq.make_consult(day)
+    await make_consult(day)
     await callback.message.answer(
-        f'Вы выбрали {day}, 18-00. Напишите свое фио, дата рождения, телефон')  # пользователь пишет всю инфу и бот должен отправить все кате в лс
+        f'Вы выбрали {day}, 18-00. Теперь нам нужно взять ваши данные, ФИО, дату рождения и номер телефона. Готовы записать?',
+        reply_markup=registration)  # пользователь пишет всю инфу и бот должен отправить все кате в лс
 
 
-@router.message(F.text)
-async def payment(message: Message, bot: Bot):
-    await bot.send_message(chat_id=448356354, text='хэлло муська, как сама')
-    await message.answer('Оплатите на карту №777777')
+@router.message(F.text == 'Погнали')
+async def reg_name(message: Message, state: FSMContext):
+    await state.set_state(Reg.name)
+    await message.answer('Введите свое имя')
+
+
+@router.message(Reg.name)
+async def reg_number(message: Message, state: FSMContext):
+    await state.update_data(name=message.text)
+    await state.set_state(Reg.number)
+    await message.answer('Введите номер телефона')
+
+
+@router.message(Reg.number)
+async def reg_birthday(message: Message, state: FSMContext):
+    await state.update_data(number=message.text)
+    await state.set_state(Reg.birthday)
+    await message.answer('Введите дату рождения')
+
+
+@router.message(Reg.birthday)
+async def reg_birthday(message: Message, state: FSMContext):
+    await state.update_data(birthday=message.text)
+    data = await state.get_data()
+    print(data)
+    await new_user(message.from_user.id, name=data['name'], number=data['number'], birthday=data['birthday'])
+    await state.clear()
+    await message.answer('Теперь нужно произвести оплату...', reply_markup=payment_keyboard)
+
+
+@router.message(F.text == 'Приступить к оплате')
+async def order(message: Message, bot: Bot):
+    await bot.send_invoice(
+        chat_id=message.chat.id,
+        title='Консультация',
+        description='Консультация у Левченко Е.А.',
+        payload='Платеж за консульацию',
+        provider_token=YOOTOKEN,
+        currency='RUB',
+        prices=[LabeledPrice(
+            label='123',
+            amount=10000
+        )]
+    )
+
+
+@router.pre_checkout_query()
+async def pre_checkout_query(pre_check: PreCheckoutQuery, bot: Bot):
+    await bot.answer_pre_checkout_query(pre_check.id, ok=True)
+    print(pre_check)
+
+
+# @router.message_handler(content_types=ContentType.TEXT)
+async def successful_payment(message: Message):
+    msg = 'Спасиибо за оплату'
+    await message.answer(msg)
+
+
