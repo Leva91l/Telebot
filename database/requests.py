@@ -1,8 +1,6 @@
-from calendar import Day
+from sqlalchemy import select
 
-from database.models import async_session
 from database.models import *
-from sqlalchemy import select, update
 
 
 async def get_windows():
@@ -14,7 +12,7 @@ async def get_windows():
 async def make_consult(day):
     async with async_session() as session:
         select_day = await session.scalar(select(Windows).where(Windows.day == day))
-        select_day.window_free = False
+        select_day.status = 'Занято'
         await session.commit()
 
 

@@ -16,8 +16,6 @@ async def main():
     await async_main()
     dp.include_router(router)
     dp.include_router(admin_router)
-    # dp.pre_checkout_query.register(pre_checkout_query)
-
     await dp.start_polling(bot)
 
 

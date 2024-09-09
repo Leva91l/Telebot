@@ -1,4 +1,4 @@
-from aiogram import Router, F, Bot, types, filters
+from aiogram import Router, F, Bot
 from aiogram.enums import ContentType
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
@@ -17,6 +17,7 @@ class Reg(StatesGroup):
     name = State()
     number = State()
     birthday = State()
+    selected_day = State()
 
 
 @router.message(CommandStart())
@@ -54,7 +55,7 @@ async def monday_callback(callback: CallbackQuery):
     await make_consult(day)
     await callback.message.answer(
         f'Вы выбрали {day}, 18-00. Теперь нам нужно взять ваши данные, ФИО, дату рождения и номер телефона. Готовы записать?',
-        reply_markup=registration)  # пользователь пишет всю инфу и бот должен отправить все кате в лс
+        reply_markup=registration)
 
 
 @router.message(F.text == 'Погнали')
@@ -106,12 +107,9 @@ async def order(message: Message, bot: Bot):
 @router.pre_checkout_query()
 async def pre_checkout_query(pre_check: PreCheckoutQuery, bot: Bot):
     await bot.answer_pre_checkout_query(pre_check.id, ok=True)
-    print(pre_check)
 
 
-# @router.message_handler(content_types=ContentType.TEXT)
+@router.message(F.content_type == ContentType.SUCCESSFUL_PAYMENT)
 async def successful_payment(message: Message):
     msg = 'Спасиибо за оплату'
-    await message.answer(msg)
-
-
+    return await message.answer(msg)
