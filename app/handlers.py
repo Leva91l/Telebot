@@ -6,7 +6,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, CallbackQuery, LabeledPrice, PreCheckoutQuery
 
 import app.keyboards as kb
-from app.keyboards import registration, payment_keyboard
+from app.keyboards import payment_keyboard
 from config import YOOTOKEN
 from database.requests import *
 
@@ -45,23 +45,18 @@ async def messanger(message: Message):
 
 @router.message(F.text == 'Telegram')
 @router.message(F.text == 'WatsApp')
-async def date_choice(message: Message):
+async def date_choice(message: Message, state: FSMContext):
     await message.answer('Выберете дату и время консультации', reply_markup=await kb.all_windows())
+    await state.set_state(Reg.selected_day)
 
 
-@router.callback_query(F.data)
-async def monday_callback(callback: CallbackQuery):
-    day = callback.data[0:2]
-    await make_consult(day)
+@router.callback_query(Reg.selected_day)
+async def monday_callback(callback: CallbackQuery, state: FSMContext):
+    full_data = callback.data
+    await state.update_data(selected_day=full_data)
     await callback.message.answer(
-        f'Вы выбрали {day}, 18-00. Теперь нам нужно взять ваши данные, ФИО, дату рождения и номер телефона. Готовы записать?',
-        reply_markup=registration)
-
-
-@router.message(F.text == 'Погнали')
-async def reg_name(message: Message, state: FSMContext):
+        f'Вы выбрали {full_data}. Теперь запишем Ваши данные. Введите ФИО:')
     await state.set_state(Reg.name)
-    await message.answer('Введите свое имя')
 
 
 @router.message(Reg.name)
@@ -81,10 +76,11 @@ async def reg_birthday(message: Message, state: FSMContext):
 @router.message(Reg.birthday)
 async def reg_birthday(message: Message, state: FSMContext):
     await state.update_data(birthday=message.text)
+    await state.set_state(None)
     data = await state.get_data()
     print(data)
     await new_user(message.from_user.id, name=data['name'], number=data['number'], birthday=data['birthday'])
-    await state.clear()
+    # await state.clear()
     await message.answer('Теперь нужно произвести оплату...', reply_markup=payment_keyboard)
 
 
@@ -110,6 +106,8 @@ async def pre_checkout_query(pre_check: PreCheckoutQuery, bot: Bot):
 
 
 @router.message(F.content_type == ContentType.SUCCESSFUL_PAYMENT)
-async def successful_payment(message: Message):
-    msg = 'Спасиибо за оплату'
+async def successful_payment(message: Message, state: FSMContext):
+    data2 = await state.get_data()
+    msg = f'Спасибо за оплату!\n{data2['name']}, вы записались на консультацию к Левченко Е.А. на {data2["selected_day"]}'
+    await make_consult(data2['selected_day'])
     return await message.answer(msg)

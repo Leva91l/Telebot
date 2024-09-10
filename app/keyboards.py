@@ -25,20 +25,12 @@ m_consult = ReplyKeyboardMarkup(
 )
 
 
-registration = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text='Погнали')]
-    ],
-    resize_keyboard=True,
-)
-
-
 async def all_windows():
     windows = await get_windows()
     keyboard = InlineKeyboardBuilder()
     for window in windows:
             keyboard.add(InlineKeyboardButton(text=f'{window.day}, {window.date}, {window.time}',
-                                              callback_data=f'{window.day}{window.date}{window.time}'))
+                                              callback_data=f'{window.day}, {window.date}, {window.time}'))
     return keyboard.adjust(2).as_markup()
 
 
