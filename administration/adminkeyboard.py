@@ -1,20 +1,30 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from database.requests import *
 
-admin_keyboard = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text='Поменять расписание')]
-    ],
-    resize_keyboard=True
+admin_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text='Закрыть расписание на определенный день', callback_data='close')],
+        [InlineKeyboardButton(text='Открыть расписание на определенный день', callback_data='open')],
+        [InlineKeyboardButton(text='Посмотреть расписание на неделю', callback_data='schedule')],
+    ]
 )
 
 
-async def get_admin_schedule():
-    windows = await get_windows()
+async def admin_close_day():
+    windows = await get_all_windows()
     keyboard = InlineKeyboardBuilder()
     for window in windows:
-        keyboard.add(InlineKeyboardButton(text=f'{window.day}',
-                                          callback_data=f'{window.day}'))
+        keyboard.add(InlineKeyboardButton(text=f'{window.day}, {window.date}',
+                                          callback_data=f'c{window.day}'))
+    return keyboard.adjust(2).as_markup()
+
+
+async def admin_open_day():
+    windows = await get_all_windows()
+    keyboard = InlineKeyboardBuilder()
+    for window in windows:
+        keyboard.add(InlineKeyboardButton(text=f'{window.day}, {window.date}',
+                                          callback_data=f'o{window.day}'))
     return keyboard.adjust(2).as_markup()

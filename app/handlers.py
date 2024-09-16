@@ -22,10 +22,8 @@ class Reg(StatesGroup):
 
 @router.message(CommandStart())
 async def cmd_start(message: Message):
-    # await set_user(message.from_user.id)
-
     await message.answer(
-        'Привет пациент Муськи! Гони свои денежки и проваливай!\nПожалуйста, выберите тип консультации!',
+        'Пожалуйста, выберите тип консультации!',
         reply_markup=kb.t_consult
     )
 
@@ -46,7 +44,7 @@ async def messanger(message: Message):
 @router.message(F.text == 'Telegram')
 @router.message(F.text == 'WatsApp')
 async def date_choice(message: Message, state: FSMContext):
-    await message.answer('Выберете дату и время консультации', reply_markup=await kb.all_windows())
+    await message.answer('Выберете дату и время консультации', reply_markup=await kb.all_free_windows())
     await state.set_state(Reg.selected_day)
 
 
@@ -78,9 +76,7 @@ async def reg_birthday(message: Message, state: FSMContext):
     await state.update_data(birthday=message.text)
     await state.set_state(None)
     data = await state.get_data()
-    print(data)
     await new_user(message.from_user.id, name=data['name'], number=data['number'], birthday=data['birthday'])
-    # await state.clear()
     await message.answer('Теперь нужно произвести оплату...', reply_markup=payment_keyboard)
 
 
@@ -108,6 +104,9 @@ async def pre_checkout_query(pre_check: PreCheckoutQuery, bot: Bot):
 @router.message(F.content_type == ContentType.SUCCESSFUL_PAYMENT)
 async def successful_payment(message: Message, state: FSMContext):
     data2 = await state.get_data()
+    print(data2)
     msg = f'Спасибо за оплату!\n{data2['name']}, вы записались на консультацию к Левченко Е.А. на {data2["selected_day"]}'
     await make_consult(data2['selected_day'])
+    await new_actualuser(message.from_user.id, name=data2['name'], number=data2['number'], birthday=data2['birthday'])
+    await window_actualuser(data2['selected_day'][0:2])
     return await message.answer(msg)

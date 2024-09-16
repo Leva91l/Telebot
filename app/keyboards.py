@@ -25,8 +25,8 @@ m_consult = ReplyKeyboardMarkup(
 )
 
 
-async def all_windows():
-    windows = await get_windows()
+async def all_free_windows():
+    windows = await get_free_windows()
     keyboard = InlineKeyboardBuilder()
     for window in windows:
             keyboard.add(InlineKeyboardButton(text=f'{window.day}, {window.date}, {window.time}',
