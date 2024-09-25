@@ -12,6 +12,14 @@ admin_keyboard = InlineKeyboardMarkup(
 )
 
 
+async def admin_schedule():
+    schedule = await get_admin_schedule()
+    keyboard = InlineKeyboardBuilder()
+    for days in schedule:
+        keyboard.add(InlineKeyboardButton(text=f'{days.day}, {days.date}', callback_data=f'info{days.day}'))
+    return keyboard.adjust(2).as_markup()
+
+
 async def admin_close_day():
     windows = await get_all_windows()
     keyboard = InlineKeyboardBuilder()
@@ -28,3 +36,5 @@ async def admin_open_day():
         keyboard.add(InlineKeyboardButton(text=f'{window.day}, {window.date}',
                                           callback_data=f'o{window.day}'))
     return keyboard.adjust(2).as_markup()
+
+

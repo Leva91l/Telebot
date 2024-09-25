@@ -7,7 +7,7 @@ from aiogram.types import Message, CallbackQuery, LabeledPrice, PreCheckoutQuery
 
 import app.keyboards as kb
 from app.keyboards import payment_keyboard
-from config import YOOTOKEN
+from config import YOOTOKEN, HELLO_MESSAGE
 from database.requests import *
 
 router = Router()
@@ -23,7 +23,11 @@ class Reg(StatesGroup):
 @router.message(CommandStart())
 async def cmd_start(message: Message):
     await message.answer(
-        'Пожалуйста, выберите тип консультации!',
+        'Вас приветсвует бот Левченко Екатерины Андреевны. Пожалуйста, ознакомьтесь с форматами работы доктора, и выберите подходящий вариант:',
+        reply_markup=kb.t_consult
+    )
+    await message.answer(
+        HELLO_MESSAGE,
         reply_markup=kb.t_consult
     )
 
@@ -102,11 +106,12 @@ async def pre_checkout_query(pre_check: PreCheckoutQuery, bot: Bot):
 
 
 @router.message(F.content_type == ContentType.SUCCESSFUL_PAYMENT)
-async def successful_payment(message: Message, state: FSMContext):
+async def successful_payment(message: Message, state: FSMContext, bot: Bot):
     data2 = await state.get_data()
     print(data2)
     msg = f'Спасибо за оплату!\n{data2['name']}, вы записались на консультацию к Левченко Е.А. на {data2["selected_day"]}'
     await make_consult(data2['selected_day'])
     await new_actualuser(message.from_user.id, name=data2['name'], number=data2['number'], birthday=data2['birthday'])
     await window_actualuser(data2['selected_day'][0:2])
+    await bot.send_message(448356354, 'Записались на консультацию')
     return await message.answer(msg)

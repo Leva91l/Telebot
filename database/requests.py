@@ -6,14 +6,19 @@ from database.models import *
 async def get_all_windows():
     async with async_session() as session:
         windows = await session.scalars(select(Window))
-
+        print(windows)
+        print('1')
         return windows
 
+
+async def get_admin_schedule():
+    async with async_session() as session:
+        schedule = await session.scalars(select(Window).where(Window.actualuser_id))
+        return schedule
 
 async def get_free_windows():
     async with async_session() as session:
         windows = await session.scalars(select(Window).where(Window.status == 'Свободно'))
-        print(windows)
         return windows
 
 
@@ -38,10 +43,12 @@ async def new_actualuser(tg_id, name, number, birthday):
         await session.commit()
 
 
-async def get_day(day):
+async def get_info_about_actualuser(day):
     async with async_session() as session:
-        my_day = await session.scalars(select(Window).where(Window.id == day))
-        return my_day
+        current_day = await session.scalar(select(Window).where(Window.day == day))
+        actual_user_id = current_day.actualuser_id
+        actual_user = await session.scalar(select(ActualUser).where(ActualUser.id == actual_user_id))
+        return actual_user
 
 
 async def admin_close_window(day):
@@ -54,8 +61,16 @@ async def admin_close_window(day):
 async def admin_open_window(day):
     async with async_session() as session:
         current_day = await session.scalar(select(Window).where(Window.day == day))
+        actual_user = current_day.actualuser_id
         current_day.status = 'Свободно'
+        current_day.actualuser_id = None
+        user = await session.scalar(select(ActualUser).where(ActualUser.id == actual_user))
+        try:
+            await session.delete(user)
+        except:
+            pass
         await session.commit()
+
 
 async def window_actualuser(day):
     async with async_session() as session:
